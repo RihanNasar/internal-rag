@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey, JSON, Text
 from datetime import datetime
-from app.database.connection import Base
+from app.database.base import Base
 
 
 class AssignmentHistory(Base):

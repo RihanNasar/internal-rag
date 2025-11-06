@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Enum, ForeignKey, Floa
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
-from app.database.connection import Base
+from app.database.base import Base
 
 
 class TaskStatus(str, enum.Enum):

@@ -4,7 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.api import api_router
 from app.config import get_settings
-from app.database.connection import engine, Base
+from app.database.connection import engine
+from app.database.base import Base
 from app.models import TeamMember, Task, AssignmentHistory, KnowledgeDocument
 import logging
 import time
