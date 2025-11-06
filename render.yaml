@@ -52,7 +52,4 @@ services:
     pullRequestPreviewsEnabled: true
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: internal-rag-backend
-          envVarKey: RENDER_EXTERNAL_URL
+        value: https://internal-rag-backend.onrender.com
