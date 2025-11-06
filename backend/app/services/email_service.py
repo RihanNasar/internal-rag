@@ -7,8 +7,8 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 # Initialize Resend with API key
-if settings.resend_api_key:
-    resend.api_key = settings.resend_api_key
+
+resend.api_key = "re_FdrQgYtu_5itKZyBGDL3izKAGLvLoeHt4"
 
 
 class EmailService:
