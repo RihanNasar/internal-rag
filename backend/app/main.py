@@ -131,7 +131,10 @@ async def health_check():
         return {
             "status": "healthy",
             "database": "connected",
-            "tables": tables
+            "tables": tables,
+            "smtp_configured": bool(settings.smtp_user and settings.smtp_password),
+            "smtp_user": settings.smtp_user[:5] + "***" if settings.smtp_user else "NOT SET",
+            "openai_configured": bool(settings.openai_api_key)
         }
     except Exception as e:
         return {

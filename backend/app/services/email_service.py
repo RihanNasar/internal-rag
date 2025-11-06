@@ -104,6 +104,8 @@ Task Assignment AI
             
             # Send email
             logger.info(f"🔄 Connecting to SMTP server: {settings.smtp_host}:{settings.smtp_port}")
+            logger.info(f"📧 Using SMTP username: {settings.smtp_user}")
+            logger.info(f"🔐 Password configured: {bool(settings.smtp_password)}")
             
             await aiosmtplib.send(
                 message,
@@ -119,6 +121,7 @@ Task Assignment AI
             
         except Exception as e:
             logger.error(f"❌ Failed to send email to {to_email}: {str(e)}")
+            logger.error(f"📧 SMTP Config - Host: {settings.smtp_host}, Port: {settings.smtp_port}, User: {settings.smtp_user}")
             logger.exception("Full error details:")
             return False
 
