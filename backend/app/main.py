@@ -3,10 +3,12 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.api import api_router
-from app.config import get_settings
-from app.database.connection import init_db
+from app.config import settings
+from app.database.connection import engine, Base
+from app.models import TeamMember, Task, Assignment, KnowledgeDocument
 import logging
 import time
+from contextlib import asynccontextmanager
 
 # Configure logging
 logging.basicConfig(
@@ -15,11 +17,39 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-settings = get_settings()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize database on startup"""
+    logger.info("🚀 Starting application...")
+    logger.info("🗄️  Creating database tables...")
+    
+    try:
+        # Import all models to ensure they're registered with Base.metadata
+        from app.models.team_member import TeamMember
+        from app.models.task import Task
+        from app.models.assignment import Assignment
+        from app.models.knowledge_document import KnowledgeDocument
+        
+        # Create all tables
+        Base.metadata.create_all(bind=engine)
+        logger.info("✅ Database tables created successfully!")
+        
+        # Log which tables were created
+        logger.info(f"📋 Tables: {list(Base.metadata.tables.keys())}")
+        
+    except Exception as e:
+        logger.error(f"❌ Database initialization failed: {e}")
+        raise
+    
+    yield
+    
+    logger.info("👋 Shutting down...")
 
 app = FastAPI(
-    title=settings.app_name,
-    debug=settings.debug,
+    title="Internal RAG API",
+    description="AI-powered task assignment and knowledge base",
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 # CORS middleware - Allow frontend to connect
@@ -71,46 +101,39 @@ app.include_router(api_router, prefix="/api")
 async def root():
     """Root endpoint"""
     return {
-        "message": "Task Assignment AI API",
-        "version": "1.0.0",
+        "message": "Internal RAG API",
+        "status": "running",
         "docs": "/docs"
     }
 
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
-    logger.info("Health check called")
-    return {
-        "status": "healthy",
-        "service": "Task Assignment AI"
-    }
-
-@app.on_event("startup")
-async def startup_event():
-    """Initialize database on startup"""
-    logger.info("🚀 Starting Task Assignment AI...")
-    logger.info(f"Environment: {'Development' if settings.debug else 'Production'}")
-    logger.info(f"Frontend URL: {settings.frontend_url}")
+    from sqlalchemy import text
+    from app.database.connection import SessionLocal
     
+    db = SessionLocal()
     try:
-        init_db()
-        logger.info("✅ Database initialized")
-    except Exception as e:
-        logger.error(f"❌ Database initialization failed: {e}")
-        raise
-    
-    # Initialize RAG service with documents
-    try:
-        from app.services.rag_service import rag_service
-        logger.info("📚 Initializing RAG knowledge base...")
+        # Check database connection
+        db.execute(text("SELECT 1"))
         
-        # Load documents from the documents folder
-        doc_count = rag_service.load_documents("documents")
-        logger.info(f"✅ RAG initialized with {doc_count} document chunks")
+        # Check if tables exist
+        result = db.execute(text("""
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public'
+        """))
+        tables = [row[0] for row in result]
+        
+        return {
+            "status": "healthy",
+            "database": "connected",
+            "tables": tables
+        }
     except Exception as e:
-        logger.warning(f"⚠️ RAG initialization failed (will initialize on first upload): {e}")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on shutdown"""
-    logger.info("👋 Shutting down Task Assignment AI...")
+        return {
+            "status": "unhealthy",
+            "error": str(e)
+        }
+    finally:
+        db.close()
