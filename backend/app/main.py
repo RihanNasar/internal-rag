@@ -3,12 +3,14 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.api import api_router
-from app.config import settings
+from app.config import get_settings
 from app.database.connection import engine, Base
 from app.models import TeamMember, Task, Assignment, KnowledgeDocument
 import logging
 import time
 from contextlib import asynccontextmanager
+
+settings = get_settings()
 
 # Configure logging
 logging.basicConfig(
