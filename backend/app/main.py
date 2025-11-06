@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from app.api import api_router
 from app.config import get_settings
 from app.database.connection import engine, Base
-from app.models import TeamMember, Task, Assignment, KnowledgeDocument
+from app.models import TeamMember, Task, AssignmentHistory, KnowledgeDocument
 import logging
 import time
 from contextlib import asynccontextmanager
@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
         # Import all models to ensure they're registered with Base.metadata
         from app.models.team_member import TeamMember
         from app.models.task import Task
-        from app.models.assignment import Assignment
+        from app.models.assignment import AssignmentHistory
         from app.models.knowledge_document import KnowledgeDocument
         
         # Create all tables
