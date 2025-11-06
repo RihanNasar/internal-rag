@@ -11,9 +11,8 @@ services:
   - type: web
     name: internal-rag-backend
     runtime: python
-    plan: free
     region: oregon
-    branch: main
+    branch: master
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
@@ -45,8 +44,7 @@ services:
   - type: web
     name: internal-rag-frontend
     runtime: static
-    plan: free
-    branch: main
+    branch: master
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
