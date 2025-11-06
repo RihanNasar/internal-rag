@@ -81,7 +81,7 @@ export const ChatInterface: React.FC = () => {
         if (task.assigned_to) {
           try {
             const response = await fetch(
-              `http://localhost:8000/api/team/${task.assigned_to}`
+              `https://internal-rag-backend.onrender.com/${task.assigned_to}`
             );
             if (response.ok) {
               const member = await response.json();

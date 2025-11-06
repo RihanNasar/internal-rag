@@ -57,7 +57,9 @@ const TeamDirectory = () => {
     try {
       setLoading(true);
       console.log("🔄 Fetching team members...");
-      const response = await fetch("http://localhost:8000/api/team/");
+      const response = await fetch(
+        "https://internal-rag-backend.onrender.com/api/team/"
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch team members");
       }
