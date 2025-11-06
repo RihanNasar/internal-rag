@@ -1,15 +1,12 @@
-services:
+databases:
   # PostgreSQL Database
-  - type: pserv
-    name: internal-rag-postgres
-    env: docker
+  - name: internal-rag-postgres
+    databaseName: internal_rag_db
+    user: internal_rag_user
     plan: free
     region: oregon
-    ipAllowList: []
-    databases:
-      - name: internal_rag_db
-        user: internal_rag_user
 
+services:
   # Backend API Service
   - type: web
     name: internal-rag-backend
@@ -26,7 +23,7 @@ services:
         value: 3.11.0
       - key: DATABASE_URL
         fromDatabase:
-          name: internal_rag_db
+          name: internal-rag-postgres
           property: connectionString
       - key: OPENAI_API_KEY
         sync: false
@@ -42,7 +39,7 @@ services:
         fromService:
           type: web
           name: internal-rag-frontend
-          property: host
+          envVarKey: RENDER_EXTERNAL_URL
 
   # Frontend Static Site
   - type: web
@@ -60,4 +57,4 @@ services:
         fromService:
           type: web
           name: internal-rag-backend
-          property: host
+          envVarKey: RENDER_EXTERNAL_URL
