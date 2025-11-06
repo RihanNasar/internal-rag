@@ -21,11 +21,9 @@ class Settings(BaseSettings):
     # OpenAI
     openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
     
-    # Email
-    smtp_host: str = os.getenv("SMTP_SERVER", "smtp.gmail.com")
-    smtp_port: int = int(os.getenv("SMTP_PORT", "465"))  # Changed to 465 (SSL) instead of 587 (TLS)
-    smtp_user: str = os.getenv("SMTP_USER", "")
-    smtp_password: str = os.getenv("SMTP_PASSWORD", "")
+    # Email - Using Resend HTTP API (works on Render free tier)
+    resend_api_key: str = os.getenv("RESEND_API_KEY", "")
+    email_from: str = os.getenv("EMAIL_FROM", "Task Assignment AI <onboarding@resend.dev>")
     
     # Frontend
     frontend_url: str = os.getenv("FRONTEND_URL", "http://localhost:5173")

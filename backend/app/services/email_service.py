@@ -1,16 +1,18 @@
 """Email service for sending notifications"""
-import aiosmtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import resend
 from app.config import get_settings
 import logging
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
+# Initialize Resend with API key
+if settings.resend_api_key:
+    resend.api_key = settings.resend_api_key
+
 
 class EmailService:
-    """Service for sending email notifications"""
+    """Service for sending email notifications via Resend HTTP API"""
     
     async def send_task_assignment(
         self,
@@ -24,30 +26,11 @@ class EmailService:
         try:
             logger.info(f"📧 Preparing to send email to {to_email}")
             
-            # Create message
-            message = MIMEMultipart("alternative")
-            message["Subject"] = "New Task Assignment"
-            message["From"] = settings.smtp_user
-            message["To"] = to_email
+            if not settings.resend_api_key:
+                logger.error("❌ RESEND_API_KEY not configured")
+                return False
             
-            # Create HTML and plain text versions
-            text = f"""
-Hello {team_member_name},
-
-You have been assigned a new task:
-
-Task: {task_description}
-
-Assignment Confidence: {confidence_score * 100:.1f}%
-
-Reasoning: {reasoning}
-
-Please review and start working on this task.
-
-Best regards,
-Task Assignment AI
-            """
-            
+            # Create HTML email content
             html = f"""
 <html>
   <head>
@@ -96,36 +79,44 @@ Task Assignment AI
 </html>
             """
             
-            # Attach both versions
-            part1 = MIMEText(text, "plain")
-            part2 = MIMEText(html, "html")
-            message.attach(part1)
-            message.attach(part2)
+            # Plain text version
+            text = f"""
+Hello {team_member_name},
+
+You have been assigned a new task:
+
+Task: {task_description}
+
+Assignment Confidence: {confidence_score * 100:.1f}%
+
+Reasoning: {reasoning}
+
+Please review and start working on this task.
+
+Best regards,
+Task Assignment AI
+            """
             
-            # Send email
-            logger.info(f"🔄 Connecting to SMTP server: {settings.smtp_host}:{settings.smtp_port}")
-            logger.info(f"📧 Using SMTP username: {settings.smtp_user}")
-            logger.info(f"🔐 Password configured: {bool(settings.smtp_password)}")
+            logger.info(f"🔄 Sending email via Resend API to {to_email}")
+            logger.info(f"� From: {settings.email_from}")
             
-            # Use SSL (port 465) instead of TLS (port 587) for better compatibility with cloud platforms
-            use_ssl = settings.smtp_port == 465
+            # Send via Resend HTTP API
+            params = {
+                "from": settings.email_from,
+                "to": [to_email],
+                "subject": "New Task Assignment",
+                "html": html,
+                "text": text,
+            }
             
-            await aiosmtplib.send(
-                message,
-                hostname=settings.smtp_host,
-                port=settings.smtp_port,
-                username=settings.smtp_user,
-                password=settings.smtp_password,
-                start_tls=not use_ssl,  # Don't use STARTTLS if we're already using SSL
-                use_tls=use_ssl,  # Use SSL connection for port 465
-            )
+            email_response = resend.Emails.send(params)
             
-            logger.info(f"✅ Email sent successfully to {to_email}")
+            logger.info(f"✅ Email sent successfully to {to_email} - ID: {email_response.get('id', 'unknown')}")
             return True
             
         except Exception as e:
             logger.error(f"❌ Failed to send email to {to_email}: {str(e)}")
-            logger.error(f"📧 SMTP Config - Host: {settings.smtp_host}, Port: {settings.smtp_port}, User: {settings.smtp_user}")
+            logger.error(f"📧 Email Config - From: {settings.email_from}, API Key Set: {bool(settings.resend_api_key)}")
             logger.exception("Full error details:")
             return False
 
