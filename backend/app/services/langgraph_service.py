@@ -3,7 +3,7 @@ import json
 from typing import TypedDict, List, Dict, Any
 from langgraph.graph import StateGraph, END
 from langchain_openai import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
 from sqlalchemy.orm import Session
 from app.models.team_member import TeamMember
