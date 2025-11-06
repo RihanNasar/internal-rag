@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     
     # Email
     smtp_host: str = os.getenv("SMTP_SERVER", "smtp.gmail.com")
-    smtp_port: int = int(os.getenv("SMTP_PORT", "587"))
+    smtp_port: int = int(os.getenv("SMTP_PORT", "465"))  # Changed to 465 (SSL) instead of 587 (TLS)
     smtp_user: str = os.getenv("SMTP_USER", "")
     smtp_password: str = os.getenv("SMTP_PASSWORD", "")
     

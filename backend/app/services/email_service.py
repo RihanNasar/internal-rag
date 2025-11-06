@@ -107,13 +107,17 @@ Task Assignment AI
             logger.info(f"📧 Using SMTP username: {settings.smtp_user}")
             logger.info(f"🔐 Password configured: {bool(settings.smtp_password)}")
             
+            # Use SSL (port 465) instead of TLS (port 587) for better compatibility with cloud platforms
+            use_ssl = settings.smtp_port == 465
+            
             await aiosmtplib.send(
                 message,
                 hostname=settings.smtp_host,
                 port=settings.smtp_port,
                 username=settings.smtp_user,
                 password=settings.smtp_password,
-                start_tls=True,
+                start_tls=not use_ssl,  # Don't use STARTTLS if we're already using SSL
+                use_tls=use_ssl,  # Use SSL connection for port 465
             )
             
             logger.info(f"✅ Email sent successfully to {to_email}")
