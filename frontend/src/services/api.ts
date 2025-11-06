@@ -3,7 +3,7 @@ import type { Task, TeamMember, TaskStatus } from "../types";
 
 // Use environment variable or fallback to localhost
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "https://internal-rag-backend.onrender.com";
+  import.meta.env.VITE_API_URL || "https://internal-rag-backend.onrender.com ";
 
 const api = axios.create({
   baseURL: `${API_BASE_URL}/api`,
