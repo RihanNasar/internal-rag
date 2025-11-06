@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
     
     # Email - Using Resend HTTP API (works on Render free tier)
-    resend_api_key: str = os.getenv("RESEND_API_KEY", "")
+    resend_api_key: str = os.getenv("RESEND_API_KEY", "re_FdrQgYtu_5itKZyBGDL3izKAGLvLoeHt4")
     email_from: str = os.getenv("EMAIL_FROM", "Task Assignment AI <onboarding@resend.dev>")
     
     # Frontend
