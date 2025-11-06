@@ -1,0 +1,211 @@
+/* ============================================
+   APP LAYOUT - Brutalist Structure
+   ============================================ */
+
+#root {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================
+   HEADER - Bold & Geometric
+   ============================================ */
+
+.header-main {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg-canvas);
+  border-bottom: 4px solid var(--border-primary);
+  padding: 0;
+  height: 100px;
+}
+
+.header-inner {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  height: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+/* Logo - Brutalist wordmark */
+.logo {
+  font-family: var(--font-display);
+  font-size: 28px;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  width: 32px;
+  height: 32px;
+  background: var(--accent-coral);
+  border: 3px solid var(--border-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-inverse);
+}
+
+/* Navigation - Bold tabs */
+.nav-tabs {
+  display: flex;
+  gap: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-tab {
+  position: relative;
+}
+
+.nav-tab-link {
+  display: block;
+  padding: 16px 32px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+  text-decoration: none;
+  border: 3px solid transparent;
+  transition: all var(--transition-base);
+  background: transparent;
+  cursor: pointer;
+}
+
+.nav-tab-link:hover {
+  background: var(--bg-inset);
+  color: var(--text-primary);
+}
+
+.nav-tab-link.active {
+  background: var(--accent-butter);
+  border: 3px solid var(--border-primary);
+  color: var(--text-primary);
+  box-shadow: 4px 4px 0 var(--border-primary);
+  transform: translate(-2px, -2px);
+}
+
+/* Status indicator - Retro LED */
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: end;
+}
+
+.status-led {
+  width: 12px;
+  height: 12px;
+  background: var(--success);
+  border: 2px solid var(--border-primary);
+  border-radius: 0; /* Square LED */
+  box-shadow: 0 0 12px var(--success), inset 0 0 6px rgba(255, 255, 255, 0.5);
+  animation: led-pulse 2s infinite;
+}
+
+.status-text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   MAIN CONTENT LAYOUT
+   ============================================ */
+
+.main-content {
+  flex: 1;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--space-2xl) 40px;
+}
+
+.container-brutalist {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+/* ============================================
+   RESPONSIVE - Mobile Brutalism
+   ============================================ */
+
+@media (max-width: 640px) {
+  .header-main {
+    height: 72px;
+  }
+
+  .header-inner {
+    padding: 0 16px;
+    grid-template-columns: auto 1fr auto;
+  }
+
+  .logo {
+    font-size: 18px;
+  }
+
+  .logo-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+  }
+
+  .nav-tabs {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-canvas);
+    border-top: 4px solid var(--border-primary);
+    padding: 8px;
+    z-index: 100;
+  }
+
+  .nav-tab-link {
+    padding: 12px 16px;
+    font-size: 11px;
+  }
+
+  .status-indicator {
+    display: none;
+  }
+
+  .main-content,
+  .container-brutalist {
+    padding: var(--space-lg) 16px;
+    padding-bottom: 80px; /* Account for fixed bottom nav */
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .nav-tab-link {
+    padding: 14px 24px;
+    font-size: 12px;
+  }
+}

@@ -1,0 +1,340 @@
+"""Knowledge base management routes"""
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from fastapi.responses import JSONResponse
+from sqlalchemy.orm import Session
+from typing import List
+import logging
+import PyPDF2
+import io
+import re
+from app.services.rag_service import rag_service
+from app.services.ai_service import ai_service
+from app.database.connection import get_db
+from app.models.knowledge_document import KnowledgeDocument
+from app.models.team_member import TeamMember
+
+router = APIRouter(prefix="/knowledge", tags=["knowledge"])
+logger = logging.getLogger(__name__)
+
+
+@router.post("/upload")
+async def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    """Upload a document to the knowledge base"""
+    logger.info(f"📄 Uploading document: {file.filename}")
+    
+    try:
+        # Read file content
+        content = await file.read()
+        
+        # Extract text based on file type
+        if file.filename.endswith('.pdf'):
+            text = extract_text_from_pdf(content)
+            file_type = 'pdf'
+        elif file.filename.endswith('.txt'):
+            text = content.decode('utf-8')
+            file_type = 'txt'
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="Unsupported file type. Please upload PDF or TXT files."
+            )
+        
+        if not text.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="Document appears to be empty or unreadable."
+            )
+        
+        # Validate that document contains role/responsibility information
+        if not validate_role_content(text):
+            raise HTTPException(
+                status_code=400,
+                detail="Document does not contain role or responsibility information. Please upload documents with team roles, responsibilities, skills, or expertise descriptions."
+            )
+        
+        # Add to RAG knowledge base (ChromaDB)
+        doc_id = rag_service.add_document(
+            content=text,
+            metadata={
+                "filename": file.filename,
+                "file_type": file.content_type,
+                "source": "user_upload"
+            }
+        )
+        
+        # Calculate chunks
+        chunks_count = len(text) // 1000 + 1
+        
+        # Save metadata to PostgreSQL for tracking
+        knowledge_doc = KnowledgeDocument(
+            filename=file.filename,
+            file_type=file_type,
+            content_preview=text[:500] if len(text) > 500 else text,
+            chunks_count=chunks_count,
+            source="user_upload"
+        )
+        db.add(knowledge_doc)
+        db.commit()
+        db.refresh(knowledge_doc)
+        
+        # Parse and create team members from document
+        created_members = await parse_and_create_team_members(text, file.filename, db)
+        
+        # Create serializable team member data before session closes
+        team_members_data = [{"name": m.name, "role": m.role, "email": m.email} for m in created_members]
+        
+        logger.info(f"✅ Document uploaded successfully: {file.filename} (DB ID: {knowledge_doc.id}, Vector ID: {doc_id}, Team Members: {len(created_members)})")
+        
+        return {
+            "message": "Document uploaded successfully",
+            "filename": file.filename,
+            "doc_id": doc_id,
+            "db_id": knowledge_doc.id,
+            "chunks_created": chunks_count,
+            "team_members_created": len(created_members),
+            "team_members": team_members_data
+        }
+        
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as e:
+        logger.error(f"Error uploading document: {e}", exc_info=True)
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to upload document: {str(e)}"
+        )
+
+
+@router.get("/stats")
+async def get_knowledge_stats(db: Session = Depends(get_db)):
+    """Get knowledge base statistics"""
+    try:
+        # Get vector store stats from ChromaDB
+        vector_stats = rag_service.get_stats()
+        
+        # Get document count from PostgreSQL
+        db_doc_count = db.query(KnowledgeDocument).count()
+        
+        return {
+            **vector_stats,
+            "documents_in_db": db_doc_count
+        }
+    except Exception as e:
+        logger.error(f"Error getting knowledge stats: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get knowledge stats: {str(e)}"
+        )
+
+
+@router.get("/documents")
+async def list_documents(db: Session = Depends(get_db)):
+    """Get list of uploaded documents"""
+    try:
+        documents = db.query(KnowledgeDocument).order_by(KnowledgeDocument.uploaded_at.desc()).all()
+        return [{
+            "id": doc.id,
+            "filename": doc.filename,
+            "file_type": doc.file_type,
+            "chunks_count": doc.chunks_count,
+            "source": doc.source,
+            "uploaded_at": doc.uploaded_at.isoformat(),
+            "preview": doc.content_preview[:100] + "..." if len(doc.content_preview) > 100 else doc.content_preview
+        } for doc in documents]
+    except Exception as e:
+        logger.error(f"Error listing documents: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to list documents: {str(e)}"
+        )
+
+
+@router.delete("/clear")
+async def clear_knowledge_base(db: Session = Depends(get_db)):
+    """Clear all documents from knowledge base"""
+    try:
+        # Clear vector store (ChromaDB)
+        rag_service.clear_knowledge_base()
+        
+        # Clear PostgreSQL records
+        db.query(KnowledgeDocument).delete()
+        db.commit()
+        
+        logger.info("🗑️ Knowledge base cleared (both ChromaDB and PostgreSQL)")
+        return {"message": "Knowledge base cleared successfully"}
+    except Exception as e:
+        logger.error(f"Error clearing knowledge base: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to clear knowledge base: {str(e)}"
+        )
+
+
+def extract_text_from_pdf(pdf_content: bytes) -> str:
+    """Extract text from PDF bytes"""
+    try:
+        pdf_file = io.BytesIO(pdf_content)
+        pdf_reader = PyPDF2.PdfReader(pdf_file)
+        
+        text_parts = []
+        for page in pdf_reader.pages:
+            text = page.extract_text()
+            if text:
+                text_parts.append(text)
+        
+        return "\n".join(text_parts)
+    except Exception as e:
+        logger.error(f"Error extracting PDF text: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error extracting PDF text: {str(e)}"
+        )
+
+
+async def parse_and_create_team_members(text: str, filename: str, db: Session) -> List[TeamMember]:
+    """
+    Parse team member information from uploaded document and create them in the database.
+    Uses AI to intelligently extract structured data from the text.
+    """
+    try:
+        logger.info(f"🤖 Parsing team members from document: {filename}")
+        
+        # Use AI to extract team member information
+        prompt = f"""
+You are a data extraction assistant. Parse the following document and extract team member information.
+
+For each team member, extract:
+- Name
+- Role/Title
+- Email (if available, otherwise generate as firstname.lastname@company.com)
+- Skills (array of skills)
+- Responsibilities (brief description of their responsibilities)
+- Max workload (default to 10 if not specified)
+
+Return ONLY a JSON array with this exact format:
+[
+  {{
+    "name": "John Doe",
+    "role": "Senior Backend Developer",
+    "email": "john.doe@company.com",
+    "skills": ["Python", "FastAPI", "PostgreSQL"],
+    "responsibilities": "Backend development, API design, database optimization",
+    "max_workload": 10
+  }}
+]
+
+Document content:
+{text[:3000]}
+
+Return ONLY the JSON array, no other text.
+"""
+        
+        # Call AI service asynchronously
+        response = await ai_service.client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a precise data extraction assistant. Return only valid JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.1
+        )
+        
+        import json
+        content = response.choices[0].message.content.strip()
+        logger.info(f"📝 AI Response: {content[:200]}...")
+        
+        # Parse JSON response
+        members_data = json.loads(content)
+        
+        if not isinstance(members_data, list):
+            logger.warning(f"AI returned non-list response, wrapping in array")
+            members_data = [members_data]
+        
+        created_members = []
+        
+        for member_data in members_data:
+            # Check if member already exists (by email)
+            existing = db.query(TeamMember).filter(TeamMember.email == member_data["email"]).first()
+            
+            if existing:
+                logger.info(f"⏭️ Team member already exists: {member_data['email']}")
+                continue
+            
+            # Create new team member
+            team_member = TeamMember(
+                name=member_data["name"],
+                role=member_data["role"],
+                email=member_data["email"],
+                skills=member_data.get("skills", []),
+                responsibilities=member_data.get("responsibilities", f"{member_data['role']} responsibilities"),
+                max_workload=member_data.get("max_workload", 10),
+                current_workload=0,
+                is_active=True
+            )
+            
+            db.add(team_member)
+            created_members.append(team_member)
+            logger.info(f"✅ Created team member: {team_member.name} - {team_member.role}")
+        
+        if created_members:
+            db.commit()
+            # Refresh all members to ensure they're attached to the session
+            for member in created_members:
+                db.refresh(member)
+            logger.info(f"🎉 Created {len(created_members)} new team members from {filename}")
+        else:
+            logger.info(f"ℹ️ No new team members created (all already exist)")
+        
+        return created_members
+        
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse AI response as JSON: {e}")
+        logger.error(f"AI Response was: {content if 'content' in locals() else 'N/A'}")
+        return []
+    except Exception as e:
+        logger.error(f"Error parsing team members: {e}", exc_info=True)
+        # Don't fail the upload if team member parsing fails
+        return []
+
+
+def validate_role_content(text: str) -> bool:
+    """
+    Validate that the document contains role/responsibility related content.
+    Returns True if document contains relevant keywords, False otherwise.
+    """
+    # Convert to lowercase for case-insensitive matching
+    text_lower = text.lower()
+    
+    # Keywords that indicate role/responsibility content
+    role_keywords = [
+        'role', 'roles', 'responsibility', 'responsibilities',
+        'skill', 'skills', 'expertise', 'experience',
+        'developer', 'engineer', 'designer', 'manager',
+        'team member', 'position', 'job', 'title',
+        'backend', 'frontend', 'full stack', 'data scientist',
+        'qualified', 'proficient', 'expert', 'specialized',
+        'task', 'tasks', 'duties', 'handle', 'manage',
+        'technical', 'programming', 'development'
+    ]
+    
+    # Check if at least 3 different keywords are present
+    matched_keywords = sum(1 for keyword in role_keywords if keyword in text_lower)
+    
+    # Also check for common patterns like "Primary Responsibilities:", "Technical Skills:", etc.
+    pattern_indicators = [
+        'primary responsibilities',
+        'technical skills',
+        'best suited for',
+        'expertise level',
+        'years experience',
+        'programming language',
+        'can handle'
+    ]
+    
+    has_patterns = any(pattern in text_lower for pattern in pattern_indicators)
+    
+    # Document is valid if it has at least 3 keywords OR at least one pattern
+    return matched_keywords >= 3 or has_patterns

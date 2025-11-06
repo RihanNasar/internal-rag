@@ -1,0 +1,464 @@
+/* ============================================
+   RETRO-FUTURISTIC BRUTALIST DESIGN SYSTEM
+   "Brutalist meets Y2K meets Swiss Design"
+   ============================================ */
+
+/* Import retro-inspired fonts */
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap");
+
+/* ============================================
+   COLOR SYSTEM - Terminal Sunset Palette
+   ============================================ */
+
+:root {
+  /* Backgrounds - Warm Paper & Concrete */
+  --bg-canvas: #e8dcc4; /* Vintage manila paper */
+  --bg-surface: #f5f0e8; /* Aged cream */
+  --bg-elevated: #fffef9; /* Bright cream highlight */
+  --bg-inset: #d4c4a8; /* Dark manila shadow */
+
+  /* Text - High Contrast Ink */
+  --text-primary: #0d0d0d; /* True black ink */
+  --text-secondary: #4a4a4a; /* Graphite */
+  --text-tertiary: #8b8b8b; /* Light graphite */
+  --text-inverse: #fffef9; /* Cream on dark */
+
+  /* Accent - Retro Tech Colors */
+  --accent-coral: #ff6b6b; /* CRT red-orange */
+  --accent-electric: #4ecdc4; /* Vintage turquoise */
+  --accent-butter: #ffe66d; /* Terminal yellow */
+  --accent-terminal: #95e1d3; /* Mint green screen */
+  --accent-deep: #2d4059; /* Navy console */
+
+  /* Functional Colors */
+  --success: #27ae60; /* Green phosphor */
+  --warning: #f39c12; /* Amber warning light */
+  --error: #e74c3c; /* Red alert */
+  --info: #3498db; /* Blue monitor glow */
+
+  /* Borders & Shadows */
+  --border-primary: #0d0d0d; /* Solid black lines */
+  --border-secondary: #8b8b8b; /* Gray lines */
+  --shadow-brutalist: 8px 8px 0 #0d0d0d;
+  --shadow-soft: 4px 4px 12px rgba(13, 13, 13, 0.15);
+
+  /* Font Stack */
+  --font-display: "Archivo Black", sans-serif;
+  --font-body: "Space Grotesk", sans-serif;
+  --font-mono: "Space Mono", monospace;
+
+  /* Spacing - Mathematical 8pt System */
+  --space-xs: 8px;
+  --space-sm: 16px;
+  --space-md: 24px;
+  --space-lg: 32px;
+  --space-xl: 48px;
+  --space-2xl: 64px;
+  --space-3xl: 96px;
+
+  /* Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Shadows */
+  --shadow-brutal-sm: 4px 4px 0 var(--border-primary);
+  --shadow-brutal-md: 6px 6px 0 var(--border-primary);
+  --shadow-brutal-lg: 8px 8px 0 var(--border-primary);
+  --shadow-brutal-xl: 12px 12px 0 var(--border-primary);
+
+  --border-width: 3px;
+  --border-width-thick: 4px;
+}
+
+/* ============================================
+   RESET & BASE STYLES
+   ============================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+/* Accessibility */
+*:focus-visible {
+  outline: 4px solid var(--accent-butter);
+  outline-offset: 4px;
+  position: relative;
+  z-index: 10;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ============================================
+   TYPOGRAPHY - Brutalist Hierarchy
+   ============================================ */
+
+.text-mega {
+  font-family: var(--font-display);
+  font-size: 72px;
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.text-display {
+  font-family: var(--font-display);
+  font-size: 48px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.text-heading-xl {
+  font-family: var(--font-body);
+  font-size: 32px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.text-heading-lg {
+  font-family: var(--font-body);
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+.text-heading-md {
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.text-body-lg {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+.text-body-md {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.text-mono {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
+.text-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.3;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+/* ============================================
+   ANIMATIONS - Retro Motion
+   ============================================ */
+
+@keyframes content-enter {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes led-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes skeleton-scan {
+  to {
+    left: 100%;
+  }
+}
+
+@keyframes spinner-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pixel-blink {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes progress-stripe {
+  to {
+    background-position: 32px 0;
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes backdrop-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-slide-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes bar-grow {
+  from {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100vh);
+  }
+}
+
+/* Stagger children animation */
+.stagger-container > * {
+  animation: content-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+.stagger-container > *:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.stagger-container > *:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.stagger-container > *:nth-child(3) {
+  animation-delay: 0.15s;
+}
+.stagger-container > *:nth-child(4) {
+  animation-delay: 0.2s;
+}
+.stagger-container > *:nth-child(5) {
+  animation-delay: 0.25s;
+}
+.stagger-container > *:nth-child(6) {
+  animation-delay: 0.3s;
+}
+
+.content-animate {
+  animation: content-enter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.shadow-shift {
+  transition: all var(--transition-base);
+}
+
+.shadow-shift:hover {
+  transform: translate(-4px, -4px);
+  box-shadow: var(--shadow-brutal-xl);
+}
+
+.pixel-grid {
+  background-image: linear-gradient(
+      0deg,
+      transparent 24%,
+      rgba(0, 0, 0, 0.05) 25%,
+      rgba(0, 0, 0, 0.05) 26%,
+      transparent 27%,
+      transparent 74%,
+      rgba(0, 0, 0, 0.05) 75%,
+      rgba(0, 0, 0, 0.05) 76%,
+      transparent 77%,
+      transparent
+    ),
+    linear-gradient(
+      90deg,
+      transparent 24%,
+      rgba(0, 0, 0, 0.05) 25%,
+      rgba(0, 0, 0, 0.05) 26%,
+      transparent 27%,
+      transparent 74%,
+      rgba(0, 0, 0, 0.05) 75%,
+      rgba(0, 0, 0, 0.05) 76%,
+      transparent 77%,
+      transparent
+    );
+  background-size: 4px 4px;
+}
+
+.scanline-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+  z-index: 9999;
+  animation: scanline 6s linear infinite;
+}
+
+/* Skeleton Loaders */
+.skeleton {
+  background: var(--bg-inset);
+  border: 3px solid var(--border-primary);
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent
+  );
+  animation: skeleton-scan 2s infinite;
+}
+
+.skeleton-text {
+  height: 20px;
+  margin-bottom: 12px;
+}
+
+.skeleton-title {
+  height: 32px;
+  width: 60%;
+  margin-bottom: 16px;
+}
+
+.skeleton-avatar {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 16px;
+}
+
+.skeleton-card {
+  height: 200px;
+}
+
+/* Spinner */
+.spinner-retro {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--border-primary);
+  background: var(--accent-coral);
+  animation: spinner-rotate 1s linear infinite;
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+
+@media print {
+  .header-main,
+  .chat-input-container,
+  .modal-backdrop,
+  .team-assign-button {
+    display: none;
+  }
+
+  .task-card,
+  .stat-card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 2px solid var(--border-primary);
+  }
+}

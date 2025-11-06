@@ -1,0 +1,146 @@
+# Team Roles and Responsibilities
+
+## Backend Development Team
+
+### Senior Backend Developer - Alice Johnson
+
+**Role**: Senior Backend Developer
+**Email**: alice@example.com
+
+**Primary Responsibilities**:
+- Design and implement RESTful APIs using Python and FastAPI
+- Database schema design and optimization using PostgreSQL
+- Implement authentication and authorization systems
+- Set up and manage cloud infrastructure on AWS
+- Performance tuning and optimization of backend services
+- Code review and mentoring junior developers
+- API documentation and testing
+
+**Technical Skills**:
+- Programming Languages: Python (Expert), SQL
+- Frameworks: FastAPI, SQLAlchemy, Pydantic
+- Databases: PostgreSQL, Redis
+- Cloud: AWS (EC2, S3, RDS, Lambda)
+- Tools: Docker, Git, Postman
+- Concepts: REST API design, Microservices, Caching strategies
+
+**Best Suited For**:
+- Backend API development tasks
+- Database design and migration projects
+- Authentication and security implementations
+- Performance optimization work
+- Cloud infrastructure setup
+- Python-based backend services
+
+**Current Expertise Level**: Senior (5+ years experience)
+**Availability**: Can handle up to 5 concurrent projects
+
+
+## Frontend Development Team
+
+### Frontend Developer - Bob Smith
+
+**Role**: Frontend Developer
+**Email**: bob@example.com
+
+**Primary Responsibilities**:
+- Build responsive web applications using React and TypeScript
+- Implement modern UI/UX designs with Tailwind CSS
+- Create reusable component libraries
+- State management using Redux or Context API
+- Ensure cross-browser compatibility
+- Optimize frontend performance
+- Implement accessibility standards (WCAG)
+
+**Technical Skills**:
+- Programming Languages: TypeScript, JavaScript, HTML5, CSS3
+- Frameworks/Libraries: React, Vite, Next.js
+- Styling: Tailwind CSS, CSS Modules, Styled Components
+- State Management: Redux, Context API, Zustand
+- Build Tools: Vite, Webpack, npm
+- Testing: Jest, React Testing Library
+
+**Best Suited For**:
+- React application development
+- UI component creation
+- Frontend architecture design
+- Responsive design implementation
+- Single Page Applications (SPAs)
+- TypeScript-based frontend projects
+
+**Current Expertise Level**: Mid-level (3+ years experience)
+**Availability**: Can handle up to 5 concurrent projects
+
+
+## Full Stack Development Team
+
+### Full Stack Developer - Carol Martinez
+
+**Role**: Full Stack Developer
+**Email**: carol@example.com
+
+**Primary Responsibilities**:
+- End-to-end feature development (frontend + backend)
+- GraphQL API design and implementation
+- MongoDB database management
+- Integration of third-party services
+- Code reviews across the stack
+- Technical documentation
+- Bug fixes and maintenance
+
+**Technical Skills**:
+- Backend: Python, Node.js, Express
+- Frontend: React, TypeScript
+- Databases: MongoDB, PostgreSQL
+- APIs: GraphQL, REST
+- Tools: Git, Docker, VS Code
+- Testing: Jest, Pytest, Cypress
+
+**Best Suited For**:
+- Full stack feature development
+- GraphQL API projects
+- MongoDB-based applications
+- Projects requiring both frontend and backend work
+- Integration tasks
+- Rapid prototyping
+
+**Current Expertise Level**: Mid-level (4+ years experience)
+**Availability**: Can handle up to 4 concurrent projects
+
+
+## DevOps and Infrastructure Team
+
+### DevOps Engineer - David Lee
+
+**Role**: DevOps Engineer
+**Email**: david@example.com
+
+**Primary Responsibilities**:
+- Set up and maintain CI/CD pipelines
+- Container orchestration with Kubernetes
+- Infrastructure as Code using Terraform
+- Cloud resource management (AWS)
+- Monitoring and logging setup
+- Security and compliance
+- Automated deployment strategies
+
+**Technical Skills**:
+- Containerization: Docker, Kubernetes
+- CI/CD: Jenkins, GitHub Actions, GitLab CI
+- Cloud Platforms: AWS (EKS, EC2, CloudFormation)
+- IaC: Terraform, Ansible
+- Scripting: Bash, Python
+- Monitoring: Prometheus, Grafana, ELK Stack
+- Version Control: Git
+
+**Best Suited For**:
+- CI/CD pipeline setup
+- Kubernetes cluster management
+- Infrastructure automation
+- Cloud migration projects
+- Deployment automation
+- Monitoring and alerting setup
+- Security hardening
+
+**Current Expertise Level**: Senior (6+ years experience)
+**Availability**: Can handle up to 5 concurrent projects
