@@ -11,13 +11,13 @@ services:
   - type: web
     name: internal-rag-backend
     runtime: python
+    plan: free
     region: oregon
     branch: master
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /
-    instanceType: free
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
