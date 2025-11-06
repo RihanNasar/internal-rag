@@ -6,9 +6,8 @@ import logging
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-# Initialize Resend with API key
-
-resend.api_key = "re_FdrQgYtu_5itKZyBGDL3izKAGLvLoeHt4"
+# Initialize Resend with API key - use hardcoded as fallback for Render
+resend.api_key = settings.resend_api_key or "re_FdrQgYtu_5itKZyBGDL3izKAGLvLoeHt4"
 
 
 class EmailService:
@@ -26,9 +25,12 @@ class EmailService:
         try:
             logger.info(f"📧 Preparing to send email to {to_email}")
             
-            if not settings.resend_api_key:
+            # Check if Resend is configured (either from env or hardcoded)
+            if not resend.api_key:
                 logger.error("❌ RESEND_API_KEY not configured")
                 return False
+            
+            logger.info(f"🔑 Using Resend API key: {resend.api_key[:10]}...")
             
             # Create HTML email content
             html = f"""
