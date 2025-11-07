@@ -287,39 +287,55 @@ Return ONLY the JSON array, no other text.
             members_data = [members_data]
         
         created_members = []
+        skipped_members = []
         
         for member_data in members_data:
-            # Check if member already exists (by email)
-            existing = db.query(TeamMember).filter(TeamMember.email == member_data["email"]).first()
-            
-            if existing:
-                logger.info(f"⏭️ Team member already exists: {member_data['email']}")
+            try:
+                # Check if member already exists (by email)
+                existing = db.query(TeamMember).filter(TeamMember.email == member_data["email"]).first()
+                
+                if existing:
+                    logger.info(f"⏭️ Team member already exists: {member_data['name']} ({member_data['email']})")
+                    skipped_members.append(member_data['name'])
+                    continue
+                
+                # Create new team member
+                team_member = TeamMember(
+                    name=member_data["name"],
+                    role=member_data["role"],
+                    email=member_data["email"],
+                    skills=member_data.get("skills", []),
+                    responsibilities=member_data.get("responsibilities", f"{member_data['role']} responsibilities"),
+                    max_workload=member_data.get("max_workload", 10),
+                    current_workload=0,
+                    is_active=True
+                )
+                
+                db.add(team_member)
+                
+                # Commit each member individually to avoid batch failures
+                try:
+                    db.commit()
+                    db.refresh(team_member)
+                    created_members.append(team_member)
+                    logger.info(f"✅ Created team member: {team_member.name} - {team_member.role} ({team_member.email})")
+                except Exception as commit_error:
+                    db.rollback()
+                    logger.warning(f"⚠️ Failed to create {member_data['name']}: {str(commit_error)}")
+                    skipped_members.append(member_data['name'])
+                    
+            except Exception as member_error:
+                logger.error(f"Error processing member {member_data.get('name', 'unknown')}: {member_error}")
+                db.rollback()
+                skipped_members.append(member_data.get('name', 'unknown'))
                 continue
-            
-            # Create new team member
-            team_member = TeamMember(
-                name=member_data["name"],
-                role=member_data["role"],
-                email=member_data["email"],
-                skills=member_data.get("skills", []),
-                responsibilities=member_data.get("responsibilities", f"{member_data['role']} responsibilities"),
-                max_workload=member_data.get("max_workload", 10),
-                current_workload=0,
-                is_active=True
-            )
-            
-            db.add(team_member)
-            created_members.append(team_member)
-            logger.info(f"✅ Created team member: {team_member.name} - {team_member.role}")
         
         if created_members:
-            db.commit()
-            # Refresh all members to ensure they're attached to the session
-            for member in created_members:
-                db.refresh(member)
             logger.info(f"🎉 Created {len(created_members)} new team members from {filename}")
-        else:
-            logger.info(f"ℹ️ No new team members created (all already exist)")
+        if skipped_members:
+            logger.info(f"⏭️ Skipped {len(skipped_members)} existing/duplicate members: {', '.join(skipped_members[:5])}")
+        if not created_members and not skipped_members:
+            logger.info(f"ℹ️ No team members created or skipped")
         
         return created_members
         
