@@ -150,7 +150,13 @@ const KnowledgeBase = () => {
   const handleClear = async () => {
     if (
       !window.confirm(
-        "Are you sure you want to clear the entire knowledge base?"
+        "⚠️ WARNING: This will permanently delete ALL data:\n\n" +
+        "• All knowledge documents\n" +
+        "• All team members\n" +
+        "• All tasks\n" +
+        "• All assignment history\n" +
+        "• Vector database (ChromaDB)\n\n" +
+        "This action CANNOT be undone. Are you sure?"
       )
     ) {
       return;
@@ -168,15 +174,16 @@ const KnowledgeBase = () => {
         throw new Error("Clear failed");
       }
 
-      setMessage("✓ Knowledge base cleared");
+      const data = await response.json();
+      setMessage(`✓ System cleared: ${data.cleared.team_members} members, ${data.cleared.tasks} tasks, ${data.cleared.assignments} assignments, ${data.cleared.knowledge_documents} documents`);
       await fetchStats();
       await fetchDocuments();
 
       setTimeout(() => {
         setMessage("");
-      }, 2000);
+      }, 5000);
     } catch (error) {
-      setMessage("✗ Failed to clear knowledge base");
+      setMessage("✗ Failed to clear system");
       console.error("Clear error:", error);
     }
   };

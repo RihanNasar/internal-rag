@@ -12,6 +12,8 @@ from app.services.ai_service import ai_service
 from app.database.connection import get_db
 from app.models.knowledge_document import KnowledgeDocument
 from app.models.team_member import TeamMember
+from app.models.task import Task
+from app.models.assignment import AssignmentHistory
 
 router = APIRouter(prefix="/knowledge", tags=["knowledge"])
 logger = logging.getLogger(__name__)
@@ -153,23 +155,50 @@ async def list_documents(db: Session = Depends(get_db)):
 
 @router.delete("/clear")
 async def clear_knowledge_base(db: Session = Depends(get_db)):
-    """Clear all documents from knowledge base"""
+    """Clear all documents from knowledge base and reset entire system"""
     try:
+        logger.info("🗑️ Starting complete system clear...")
+        
         # Clear vector store (ChromaDB)
         rag_service.clear_knowledge_base()
+        logger.info("✓ ChromaDB cleared")
         
-        # Clear PostgreSQL records
-        db.query(KnowledgeDocument).delete()
+        # Clear all database tables in order (due to foreign key constraints)
+        # 1. Clear assignment history first (has foreign keys to tasks and team_members)
+        deleted_assignments = db.query(AssignmentHistory).delete()
+        logger.info(f"✓ Cleared {deleted_assignments} assignment records")
+        
+        # 2. Clear tasks
+        deleted_tasks = db.query(Task).delete()
+        logger.info(f"✓ Cleared {deleted_tasks} tasks")
+        
+        # 3. Clear team members
+        deleted_members = db.query(TeamMember).delete()
+        logger.info(f"✓ Cleared {deleted_members} team members")
+        
+        # 4. Clear knowledge documents
+        deleted_docs = db.query(KnowledgeDocument).delete()
+        logger.info(f"✓ Cleared {deleted_docs} knowledge documents")
+        
         db.commit()
         
-        logger.info("🗑️ Knowledge base cleared (both ChromaDB and PostgreSQL)")
-        return {"message": "Knowledge base cleared successfully"}
+        logger.info("🗑️ Complete system clear successful")
+        return {
+            "message": "All data cleared successfully",
+            "cleared": {
+                "assignments": deleted_assignments,
+                "tasks": deleted_tasks,
+                "team_members": deleted_members,
+                "knowledge_documents": deleted_docs,
+                "vector_store": "cleared"
+            }
+        }
     except Exception as e:
-        logger.error(f"Error clearing knowledge base: {e}")
+        logger.error(f"Error clearing system: {e}")
         db.rollback()
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to clear knowledge base: {str(e)}"
+            detail=f"Failed to clear system: {str(e)}"
         )
 
 
