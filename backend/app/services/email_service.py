@@ -1,15 +1,10 @@
 ﻿"""Email service for sending notifications"""
-import sib_api_v3_sdk
-from sib_api_v3_sdk.rest import ApiException
+import httpx
 from app.config import get_settings
 import logging
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
-
-# Initialize Brevo API
-configuration = sib_api_v3_sdk.Configuration()
-configuration.api_key['api-key'] = settings.brevo_api_key
 
 
 class EmailService:
@@ -103,26 +98,39 @@ Task Assignment AI
             logger.info(f"🔄 Sending email via Brevo API to {to_email}")
             logger.info(f"📧 From: {settings.email_from_name} <{settings.email_from_address}>")
             
-            # Create Brevo API instance
-            api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(configuration))
+            # Send via Brevo's pure HTTP API
+            url = "https://api.brevo.com/v3/smtp/email"
+            headers = {
+                "accept": "application/json",
+                "api-key": settings.brevo_api_key,
+                "content-type": "application/json"
+            }
+            payload = {
+                "sender": {
+                    "name": settings.email_from_name,
+                    "email": settings.email_from_address
+                },
+                "to": [
+                    {
+                        "email": to_email,
+                        "name": team_member_name
+                    }
+                ],
+                "subject": "New Task Assignment",
+                "htmlContent": html,
+                "textContent": text
+            }
             
-            # Prepare email
-            send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
-                to=[{"email": to_email, "name": team_member_name}],
-                sender={"name": settings.email_from_name, "email": settings.email_from_address},
-                subject="New Task Assignment",
-                html_content=html,
-                text_content=text,
-            )
+            async with httpx.AsyncClient() as client:
+                response = await client.post(url, json=payload, headers=headers, timeout=30.0)
+                response.raise_for_status()
+                result = response.json()
             
-            # Send email
-            api_response = api_instance.send_transac_email(send_smtp_email)
-            
-            logger.info(f"✅ Email sent successfully to {to_email} - Message ID: {api_response.message_id}")
+            logger.info(f"✅ Email sent successfully to {to_email} - Message ID: {result.get('messageId', 'unknown')}")
             return True
             
-        except ApiException as e:
-            logger.error(f"❌ Brevo API error sending to {to_email}: {e}")
+        except httpx.HTTPStatusError as e:
+            logger.error(f"❌ Brevo HTTP error sending to {to_email}: {e.response.status_code} - {e.response.text}")
             logger.exception("Full error details:")
             return False
         except Exception as e:
