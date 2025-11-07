@@ -1,17 +1,19 @@
-"""Email service for sending notifications"""
-import resend
+﻿"""Email service for sending notifications"""
+import sib_api_v3_sdk
+from sib_api_v3_sdk.rest import ApiException
 from app.config import get_settings
 import logging
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-# Initialize Resend with API key - use hardcoded as fallback for Render
-resend.api_key = settings.resend_api_key or "re_FdrQgYtu_5itKZyBGDL3izKAGLvLoeHt4"
+# Initialize Brevo API
+configuration = sib_api_v3_sdk.Configuration()
+configuration.api_key['api-key'] = settings.brevo_api_key
 
 
 class EmailService:
-    """Service for sending email notifications via Resend HTTP API"""
+    """Service for sending email notifications via Brevo HTTP API"""
     
     async def send_task_assignment(
         self,
@@ -25,12 +27,11 @@ class EmailService:
         try:
             logger.info(f"📧 Preparing to send email to {to_email}")
             
-            # Check if Resend is configured (either from env or hardcoded)
-            if not resend.api_key:
-                logger.error("❌ RESEND_API_KEY not configured")
+            if not settings.brevo_api_key:
+                logger.error("❌ BREVO_API_KEY not configured")
                 return False
             
-            logger.info(f"🔑 Using Resend API key: {resend.api_key[:10]}...")
+            logger.info(f"🔑 Using Brevo API key: {settings.brevo_api_key[:15]}...")
             
             # Create HTML email content
             html = f"""
@@ -99,26 +100,34 @@ Best regards,
 Task Assignment AI
             """
             
-            logger.info(f"🔄 Sending email via Resend API to {to_email}")
-            logger.info(f"� From: {settings.email_from}")
+            logger.info(f"🔄 Sending email via Brevo API to {to_email}")
+            logger.info(f"📧 From: {settings.email_from_name} <{settings.email_from_address}>")
             
-            # Send via Resend HTTP API
-            params = {
-                "from": settings.email_from,
-                "to": [to_email],
-                "subject": "New Task Assignment",
-                "html": html,
-                "text": text,
-            }
+            # Create Brevo API instance
+            api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(configuration))
             
-            email_response = resend.Emails.send(params)
+            # Prepare email
+            send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+                to=[{"email": to_email, "name": team_member_name}],
+                sender={"name": settings.email_from_name, "email": settings.email_from_address},
+                subject="New Task Assignment",
+                html_content=html,
+                text_content=text,
+            )
             
-            logger.info(f"✅ Email sent successfully to {to_email} - ID: {email_response.get('id', 'unknown')}")
+            # Send email
+            api_response = api_instance.send_transac_email(send_smtp_email)
+            
+            logger.info(f"✅ Email sent successfully to {to_email} - Message ID: {api_response.message_id}")
             return True
             
+        except ApiException as e:
+            logger.error(f"❌ Brevo API error sending to {to_email}: {e}")
+            logger.exception("Full error details:")
+            return False
         except Exception as e:
             logger.error(f"❌ Failed to send email to {to_email}: {str(e)}")
-            logger.error(f"📧 Email Config - From: {settings.email_from}, API Key Set: {bool(settings.resend_api_key)}")
+            logger.error(f"📧 Email Config - From: {settings.email_from_name} <{settings.email_from_address}>, API Key Set: {bool(settings.brevo_api_key)}")
             logger.exception("Full error details:")
             return False
 

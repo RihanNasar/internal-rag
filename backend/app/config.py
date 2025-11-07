@@ -21,9 +21,10 @@ class Settings(BaseSettings):
     # OpenAI
     openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
     
-    # Email - Using Resend HTTP API (works on Render free tier)
-    resend_api_key: str = os.getenv("RESEND_API_KEY", "re_FdrQgYtu_5itKZyBGDL3izKAGLvLoeHt4")
-    email_from: str = os.getenv("EMAIL_FROM", "Task Assignment AI <onboarding@resend.dev>")
+    # Email - Using Brevo (formerly Sendinblue) HTTP API
+    brevo_api_key: str = os.getenv("BREVO_API_KEY", "")
+    email_from_name: str = os.getenv("EMAIL_FROM_NAME", "Task Assignment AI")
+    email_from_address: str = os.getenv("EMAIL_FROM_ADDRESS", "mrnzero321@gmail.com")
     
     # Frontend
     frontend_url: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
