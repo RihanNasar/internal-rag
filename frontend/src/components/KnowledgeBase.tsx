@@ -31,7 +31,7 @@ const KnowledgeBase = () => {
   // Fetch knowledge base stats
   const fetchStats = useCallback(async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/knowledge/stats");
+      const response = await fetch("https://internal-rag-backend.onrender.com/api/knowledge/stats");
       const data = await response.json();
       setStats(data);
     } catch (error) {
