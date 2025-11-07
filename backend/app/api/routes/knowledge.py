@@ -233,36 +233,50 @@ async def parse_and_create_team_members(text: str, filename: str, db: Session) -
         
         # Use AI to extract team member information
         prompt = f"""
-You are a data extraction assistant. Parse the following document and extract team member information.
+You are a data extraction assistant. Parse the following document and extract ALL team member information.
 
-IMPORTANT: Extract the EXACT email address provided in the document. Do NOT generate or make up email addresses.
+CRITICAL INSTRUCTIONS:
+1. Extract the EXACT email address provided in the document - do NOT generate or make up emails
+2. Extract EVERY person mentioned in the document
+3. If multiple people share the same email, that's okay - extract them all anyway
+4. Return a JSON array with ALL people found
 
 For each team member, extract:
 - Name (exact name from document)
-- Role/Title (exact title from document)
+- Role/Title (exact title from document)  
 - Email (MUST be the exact email from the document - look for patterns like name@domain.com)
-- Skills (array of skills mentioned)
-- Responsibilities (brief description of their responsibilities)
+- Skills (array of skills mentioned, or empty array if not specified)
+- Responsibilities (brief description from the document)
 - Max workload (default to 10 if not specified)
 
-Return ONLY a JSON array with this exact format:
+EXAMPLE INPUT:
+"Sarah Chen (mrnzero321@gmail.com) - Digital Marketing Manager
+David Kim (theblankerera@gmail.com) - Content Strategy Lead"
+
+EXAMPLE OUTPUT (return EXACTLY this format, no markdown, no extra text):
 [
   {{
-    "name": "John Doe",
-    "role": "Senior Backend Developer",
-    "email": "john.doe@company.com",
-    "skills": ["Python", "FastAPI", "PostgreSQL"],
-    "responsibilities": "Backend development, API design, database optimization",
+    "name": "Sarah Chen",
+    "role": "Digital Marketing Manager",
+    "email": "mrnzero321@gmail.com",
+    "skills": [],
+    "responsibilities": "Digital Marketing Manager responsibilities",
+    "max_workload": 10
+  }},
+  {{
+    "name": "David Kim",
+    "role": "Content Strategy Lead",
+    "email": "theblankerera@gmail.com",
+    "skills": [],
+    "responsibilities": "Content Strategy Lead responsibilities",
     "max_workload": 10
   }}
 ]
 
-CRITICAL: The email field MUST contain the exact email address from the document. If you see "mrnzero321@gmail.com" in the document, use that EXACT email, not a generated one.
+Now extract from this document:
+{text[:5000]}
 
-Document content:
-{text[:4000]}
-
-Return ONLY the JSON array, no other text.
+Return ONLY the JSON array, no markdown code blocks, no extra text.
 """
         
         # Call AI service asynchronously
@@ -279,8 +293,18 @@ Return ONLY the JSON array, no other text.
         content = response.choices[0].message.content.strip()
         logger.info(f"📝 AI Response: {content[:200]}...")
         
+        # Clean up response - remove markdown code blocks if present
+        content_clean = content.strip()
+        if content_clean.startswith("```json"):
+            content_clean = content_clean[7:]  # Remove ```json
+        if content_clean.startswith("```"):
+            content_clean = content_clean[3:]  # Remove ```
+        if content_clean.endswith("```"):
+            content_clean = content_clean[:-3]  # Remove trailing ```
+        content_clean = content_clean.strip()
+        
         # Parse JSON response
-        members_data = json.loads(content)
+        members_data = json.loads(content_clean)
         
         if not isinstance(members_data, list):
             logger.warning(f"AI returned non-list response, wrapping in array")
@@ -342,6 +366,7 @@ Return ONLY the JSON array, no other text.
     except json.JSONDecodeError as e:
         logger.error(f"Failed to parse AI response as JSON: {e}")
         logger.error(f"AI Response was: {content if 'content' in locals() else 'N/A'}")
+        logger.error(f"Cleaned content was: {content_clean if 'content_clean' in locals() else 'N/A'}")
         return []
     except Exception as e:
         logger.error(f"Error parsing team members: {e}", exc_info=True)
