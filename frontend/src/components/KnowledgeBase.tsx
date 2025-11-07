@@ -43,7 +43,7 @@ const KnowledgeBase = () => {
   const fetchDocuments = useCallback(async () => {
     try {
       const response = await fetch(
-        "http://localhost:8000/api/knowledge/documents"
+        "https://internal-rag-backend.onrender.com/api/knowledge/documents"
       );
       const data = await response.json();
       setDocuments(data);
@@ -101,7 +101,7 @@ const KnowledgeBase = () => {
       formData.append("file", file);
 
       const response = await fetch(
-        "http://localhost:8000/api/knowledge/upload",
+        "https://internal-rag-backend.onrender.com/api/knowledge/upload",
         {
           method: "POST",
           body: formData,
@@ -158,7 +158,7 @@ const KnowledgeBase = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:8000/api/knowledge/clear",
+        "https://internal-rag-backend.onrender.com/api/knowledge/clear",
         {
           method: "DELETE",
         }

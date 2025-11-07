@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     # Email - Using Brevo (formerly Sendinblue) HTTP API
     brevo_api_key: str = os.getenv("BREVO_API_KEY", "")
     email_from_name: str = os.getenv("EMAIL_FROM_NAME", "Task Assignment AI")
-    email_from_address: str = os.getenv("EMAIL_FROM_ADDRESS", "mrnzero321@gmail.com")
+    email_from_address: str = os.getenv("EMAIL_FROM_ADDRESS", "mrihannasar@gmail.com")
     
     # Frontend
     frontend_url: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
