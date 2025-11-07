@@ -235,11 +235,13 @@ async def parse_and_create_team_members(text: str, filename: str, db: Session) -
         prompt = f"""
 You are a data extraction assistant. Parse the following document and extract team member information.
 
+IMPORTANT: Extract the EXACT email address provided in the document. Do NOT generate or make up email addresses.
+
 For each team member, extract:
-- Name
-- Role/Title
-- Email (if available, otherwise generate as firstname.lastname@company.com)
-- Skills (array of skills)
+- Name (exact name from document)
+- Role/Title (exact title from document)
+- Email (MUST be the exact email from the document - look for patterns like name@domain.com)
+- Skills (array of skills mentioned)
 - Responsibilities (brief description of their responsibilities)
 - Max workload (default to 10 if not specified)
 
@@ -255,8 +257,10 @@ Return ONLY a JSON array with this exact format:
   }}
 ]
 
+CRITICAL: The email field MUST contain the exact email address from the document. If you see "mrnzero321@gmail.com" in the document, use that EXACT email, not a generated one.
+
 Document content:
-{text[:3000]}
+{text[:4000]}
 
 Return ONLY the JSON array, no other text.
 """
