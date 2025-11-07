@@ -230,45 +230,49 @@ async def parse_and_create_team_members(text: str, filename: str, db: Session) -
     """
     try:
         logger.info(f"🤖 Parsing team members from document: {filename}")
+        logger.info(f"📄 Document preview (first 500 chars): {text[:500]}")
         
         # Use AI to extract team member information
         prompt = f"""
 You are a data extraction assistant. Parse the following document and extract ALL team member information.
 
 CRITICAL INSTRUCTIONS:
-1. Extract the EXACT email address provided in the document - do NOT generate or make up emails
-2. Extract EVERY person mentioned in the document
-3. If multiple people share the same email, that's okay - extract them all anyway
+1. Extract EVERY person mentioned in the document
+2. If email is provided in document, use the EXACT email - do NOT modify it
+3. If email is NOT provided, generate one based on name: firstname.lastname@company.com
 4. Return a JSON array with ALL people found
 
 For each team member, extract:
 - Name (exact name from document)
 - Role/Title (exact title from document)  
-- Email (MUST be the exact email from the document - look for patterns like name@domain.com)
+- Email (if provided use exact email, if not provided generate: firstname.lastname@company.com)
 - Skills (array of skills mentioned, or empty array if not specified)
 - Responsibilities (brief description from the document)
 - Max workload (default to 10 if not specified)
 
 EXAMPLE INPUT:
-"Sarah Chen (mrnzero321@gmail.com) - Digital Marketing Manager
-David Kim (theblankerera@gmail.com) - Content Strategy Lead"
+"1. Sarah Chen - Digital Marketing Manager
+   Responsibilities: Managing digital marketing campaigns.
+
+2. David Kim - Content Strategy Lead
+   Responsibilities: Developing content calendars."
 
 EXAMPLE OUTPUT (return EXACTLY this format, no markdown, no extra text):
 [
   {{
     "name": "Sarah Chen",
     "role": "Digital Marketing Manager",
-    "email": "mrnzero321@gmail.com",
+    "email": "sarah.chen@company.com",
     "skills": [],
-    "responsibilities": "Digital Marketing Manager responsibilities",
+    "responsibilities": "Managing digital marketing campaigns.",
     "max_workload": 10
   }},
   {{
     "name": "David Kim",
     "role": "Content Strategy Lead",
-    "email": "theblankerera@gmail.com",
+    "email": "david.kim@company.com",
     "skills": [],
-    "responsibilities": "Content Strategy Lead responsibilities",
+    "responsibilities": "Developing content calendars.",
     "max_workload": 10
   }}
 ]
@@ -306,17 +310,27 @@ Return ONLY the JSON array, no markdown code blocks, no extra text.
         # Parse JSON response
         members_data = json.loads(content_clean)
         
+        logger.info(f"✅ Parsed {len(members_data)} team members from AI response")
+        
         if not isinstance(members_data, list):
             logger.warning(f"AI returned non-list response, wrapping in array")
             members_data = [members_data]
+        
+        if len(members_data) == 0:
+            logger.warning(f"⚠️ AI extracted 0 team members from document. Document might not contain proper team member format.")
+            logger.warning(f"Expected format: Name (email@domain.com) - Role")
+            return []
         
         created_members = []
         skipped_members = []
         
         for member_data in members_data:
             try:
-                # Check if member already exists (by email)
-                existing = db.query(TeamMember).filter(TeamMember.email == member_data["email"]).first()
+                # Check if member already exists (by name AND email to avoid false positives with generated emails)
+                existing = db.query(TeamMember).filter(
+                    TeamMember.email == member_data["email"],
+                    TeamMember.name == member_data["name"]
+                ).first()
                 
                 if existing:
                     logger.info(f"⏭️ Team member already exists: {member_data['name']} ({member_data['email']})")
