@@ -27,6 +27,7 @@ class EmailService:
                 return False
             
             logger.info(f"🔑 Using Brevo API key: {settings.brevo_api_key[:15]}...")
+            logger.warning(f"⚠️ IMPORTANT: If emails are not being received, verify sender email in Brevo dashboard: https://app.brevo.com/settings/senders")
             
             # Create HTML email content
             html = f"""
@@ -116,9 +117,14 @@ Task Assignment AI
                         "name": team_member_name
                     }
                 ],
-                "subject": "New Task Assignment",
+                "replyTo": {
+                    "email": settings.email_from_address,
+                    "name": settings.email_from_name
+                },
+                "subject": f"🎯 New Task Assignment - AI Confidence: {confidence_score * 100:.0f}%",
                 "htmlContent": html,
-                "textContent": text
+                "textContent": text,
+                "tags": ["task-assignment", "auto-assigned"]
             }
             
             async with httpx.AsyncClient() as client:
