@@ -67,12 +67,53 @@ export const ChatInterface: React.FC = () => {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const userInput = input;
     setInput("");
     setIsLoading(true);
 
     try {
-      // Create task
-      const task = await taskAPI.createTask(input);
+      // First, send to chat endpoint to determine intent
+      const chatResponse = await fetch(
+        `${import.meta.env.VITE_API_URL || "http://localhost:8000"}/api/chat/`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: userInput }),
+        }
+      );
+
+      if (!chatResponse.ok) {
+        throw new Error("Failed to communicate with chat service");
+      }
+
+      const chatData = await chatResponse.json();
+
+      // If it's not a task request, just show the conversational response
+      if (!chatData.should_create_task) {
+        const assistantMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: chatData.response,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+        setIsLoading(false);
+        return;
+      }
+
+      // It's a task request - show initial response and then create task
+      const initialMessage: ChatMessage = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: chatData.response,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, initialMessage]);
+
+      // Now create the task
+      const task = await taskAPI.createTask(
+        chatData.task_description || userInput
+      );
 
       let content = "";
       if (task.status === "auto_assigned") {
@@ -81,7 +122,9 @@ export const ChatInterface: React.FC = () => {
         if (task.assigned_to) {
           try {
             const response = await fetch(
-              `https://internal-rag-backend.onrender.com/${task.assigned_to}`
+              `${
+                import.meta.env.VITE_API_URL || "http://localhost:8000"
+              }/api/team/${task.assigned_to}`
             );
             if (response.ok) {
               const member = await response.json();
@@ -114,7 +157,7 @@ export const ChatInterface: React.FC = () => {
       }
 
       const assistantMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
+        id: (Date.now() + 2).toString(),
         role: "assistant",
         content,
         timestamp: new Date(),
@@ -123,12 +166,12 @@ export const ChatInterface: React.FC = () => {
 
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error: any) {
-      console.error("Error creating task:", error);
+      console.error("Error in chat:", error);
 
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: `❌ Sorry, there was an error processing your request:\n\n${
+        content: `❌ Sorry, there was an error:\n\n${
           error.response?.data?.detail || error.message || "Unknown error"
         }`,
         timestamp: new Date(),
